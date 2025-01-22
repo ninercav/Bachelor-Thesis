@@ -1,0 +1,22 @@
+\chapter{Introduction}
+\label{ch01:intro}
+
+\section{Motivation}
+\label{ch01:intro:motivation}
+With the ever-present and rapid technological progress, it remains important to keep in mind that legacy systems do not simply disappear with every new advancement. Legacy systems like Adabas, a 1971 non-relational database, remain essential for enterprise applications requiring high-volume transaction processing. However, the use of systems like Adabas represent challenges in integrating them with modern systems and use cases, especially since Adabas programs are mostly written using the proprietary Natural language. This increases the difficulty and cost of maintance \cite{ibm_redpaper_key}. In some enterprise cases, a relational database is preferred on top of the existing Adabas hosted on mainframe. The benefits can include the flexibility and widespread use of SQL queries, triggers, referential constraints, and a more simplified integration with modern systems \cite{ibm_redpaper_key}.
+
+To modernize Adabas, the \ac{ART} for Adabas on z/OS was developed for the replication of Adabas transactional events to other systems. A proprietary product of Software AG, it supports the replication to various supported systems, called \textit{targets}. The majority of supported targets are relational databases such as MySQL, PostgreSQL, and DB2. \ac{ART} also supports replicating to Adabas on \ac{LUW} or to Kafka. % write about why replication to other systems is important
+
+However, the Target Adapter has some drawbacks, which have been noted both by clients and developers. These include performance issues when replicating to relational databases and a lack of parallelization support, which can also be detrimental to performance. Recent customer demand also included replication support to Apache Kafka. While \ac{ART} has support for Kafka, the lacking support for parallel processing can act as a bottleneck, preventing the full use of Kafka's potential. This served as motivation for a semester project to use the existing Kafka Connect framework to write a custom source connector prototype for Kafka, which would allow replicating Adabas transactional events to a Kafka topic.
+
+The project was later extended to provide a proof of concept for replication to a relational database using a Kafka-native pipeline, with Kafka's inherent parallelization and scalability capabilities \cite{peddireddy2023kafkadatalakebenefits} as its main advantage over \ac{ART}.
+
+\section{Research Question}
+\label{ch01:intro:researchquestion}
+To explore in what ways a Kafka replication pipeline, despite higher complexity and multiple components, can compete with the existing \ac{ART} solution, the following research question was chosen: \textbf{"How does the performance of a Kafka Connect-based replication pipeline for Adabas on mainframe compare to the Adabas Event Replicator Target Adapter?"}. The proof of concept developed for replication to a relational database will be used for direct comparison with \ac{ART} in terms of performance, with the aim of exploring their relative strengths and weaknesses. The research hypothesis states that the Kafka Connect-based replication will outperform \ac{ART} if it takes advantage of its parallelization capabilities. If it is run as a single-thread application, then the performance will be equal or even worse, due to the multiple components and related latency.
+
+% \section{Objectives and Scope}
+% \label{ch01:intro:objectivesandscope}
+% leave out objectives and scope? cover in methodology instead?
+\section{Thesis Structure}
+\label{ch01:intro:thesisstructure}

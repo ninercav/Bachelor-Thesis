@@ -1,0 +1,42 @@
+%*******************************************************
+% Acronyms
+%*******************************************************
+\automark[section]{chapter}
+\renewcommand{\chaptermark}[1]{\markboth{\spacedlowsmallcaps{#1}}{\spacedlowsmallcaps{#1}}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\enspace\spacedlowsmallcaps{#1}}}
+\refstepcounter{dummy}
+\pdfbookmark[0]{List of abbreviations}{abbreviationlist}
+\markboth{\spacedlowsmallcaps{List of abbreviations}}{\spacedlowsmallcaps{List of abbreviations}}
+\chapter*{List of abbreviations}
+
+% Insert your acronyms here
+\begin{acronym}[UML]
+    \acro{ACID}{Atomicity, Consistency, Isolation, Durability}
+    \acro{APIs}{Application Programming Interfaces}
+    \acro{ART}{Event Replicator Target Adapter}
+    \acro{BT}{Backout Transaction}
+    \acro{CAP}{Consistency, Availability, Partition Tolerance}
+    \acro{CLOG}{Command Log}
+    \acro{CORBA}{Common Object Request Broker Architecture}
+    \acro{DBMS}{Database Management System}
+    \acro{ET}{End Transaction}
+    \acro{FDT}{Field Definition Table}
+    \acro{HTTP}{Hypertext Transfer Protocol}
+    \acro{IS}{Initial State}
+    \acro{ISN}{Internal Sequence Number}
+    \acro{ISR}{In-Sync Replicas}
+    \acro{JDBC}{Java Database Connectivity API}
+    \acro{JMX}{Java Management Extensions}
+    \acro{JVM}{Java Virtual Machine}
+    \acro{LUW}{Linux, Unix, Windows}
+    \acro{MBeans}{Managed Beans}
+    \acro{PLOG}{Protection Log}
+    \acro{PromQL}{Prometheus Query Language}
+    \acro{RABN}{Relative Adabas Block Number}
+    \acro{REPTOR}{Event Replicator for Adabas}
+    \acro{SLOG}{Subscription Log}
+    \acro{SOA}{Service-Oriented Architecture}
+    \acro{UOW}{Unit of Work}
+\end{acronym}
+
+\cleardoublepage

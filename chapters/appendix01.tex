@@ -1,0 +1,208 @@
+\chapter{Additional Samples}
+
+\section{Binary Message Example}
+\label{appendix01:binarymessageexample}
+\ref{appendix01:binarymessageexample:binarymessage} shows the hexdump of a sample binary message, with a readable preview on the right. The message in question shows the "after image" of the Adabas record after an insert operation. It is then parsed into a custom DataObject type. The console dump of this object can be seen in \ref{appendix01:binarymessageexample:parsedmessage}. Names such as URBDTYP and URBRISN represent \ac{REPTOR}-internal data structure fields. For instance, URBRISN indicates the \ac{ISN} of the record being displayed, while URBTTTIM indicates the exact time of the transaction commit for this record. Fields that are in groups, such as LEAVE\_DUE and LEAVE\_TAKEN (in group LEAVE\_DATA), are flattened and treated as level-1 fields. Meanwhile, MUs such as ADDRESS\_LINE are represented by an array, while the PE field LEAVE\_BOOKED is represented as an array of objects (LinkedHashMaps to retain the order of occurrences). For the \ac{FDT} that defines all of the field names, see \ref{ch05:methodology:adabasfile}.
+
+\subsection{Event Replicator Binary Message}
+\label{appendix01:binarymessageexample:binarymessage}
+\begin{verbatim}
+0000: e4d9c2c8 00000040 f0f10001 000003f0  .......@........ URBH... 01.....0
+0010: 00003fe9 00000000 00000000 56750000  ..?.........Vu.. ...Z............
+0020: c7c5d9c1 e3c1d6d9 00000000 00000000  ................ GERATAOR........
+0030: 00000000 00000000 00000000 00000000  ................ ................
+0040: e4d9c2e3 00000080 c5d4d7d3 40404040  ............@@@@ URBT....EMPL    
+0050: 000007ba 00000001 e04cc55c a8245c07  .........L.\.$\. ...[....\<E*y.*.
+0060: e04cc55c ac256c12 56730000 000498e8  .L.\.%l.Vs...... \<E*..%.......qY
+0070: 85620001 40404040 40404040 00fc7e80  .b..@@@@@@@@..~. e...        ..=.
+0080: e8f5f0f8 f7f7f1f1 56750000 40404040  ........Vu..@@@@ Y5087711....    
+0090: 00000000 00000000 400240e8 00000000  ........@.@..... ........ . Y....
+00a0: 00000000 0000c100 e8f5f0f8 f7f7f140  ...............@ ......A.Y508771 
+00b0: 00000000 00000000 00000000 00000000  ................ ................
+00c0: e4d9c2d9 00000040 00000001 00010001  .......@........ URBR... ........
+00d0: 000098f0 e04cc55c a5774c06 c9400000  .....L.\.wL..@.. ..q0\<E*v.<.I ..
+00e0: 00000000 40404040 40404040 00000000  ....@@@@@@@@.... ....        ....
+00f0: 00000000 00000000 00000000 00000000  ................ ................
+0100: e4d9c2c4 000002f0 00000020 000002c1  ........... .... URBD...0.......A
+0110: 00000001 c1000000 00000000 00000000  ................ ....A...........
+0120: c4f2f3f4 f5f6f8f0 d481a740 40404040  ...........@@@@@ D2345680Max     
+0130: 40404040 40404040 40404040 e64b4040  @@@@@@@@@@@@.K@@             W.  
+0140: 40404040 40404040 40404040 40404040  @@@@@@@@@@@@@@@@                 
+0150: d1968895 a2969540 40404040 40404040  .......@@@@@@@@@ Johnson         
+0160: 40404040 40400000 0739630f d3899585  @@@@@@...9c.....       ......Line
+0170: 40f14040 40404040 40404040 40404040  @.@@@@@@@@@@@@@@  1              
+0180: d3899585 40f24040 40404040 40404040  ....@.@@@@@@@@@@ Line 2          
+0190: 40404040 d3899585 40f34040 40404040  @@@@....@.@@@@@@     Line 3      
+01a0: 40404040 40404040 d3899585 40f44040  @@@@@@@@....@.@@         Line 4  
+01b0: 40404040 40404040 40404040 d3899585  @@@@@@@@@@@@....             Line
+01c0: 40f54040 40404040 40404040 40404040  @.@@@@@@@@@@@@@@  5              
+01d0: 40404040 40404040 40404040 40404040  @@@@@@@@@@@@@@@@                 
+      5 lines same as above ...
+0230: 40404040 c1a48392 93819584 40404040  @@@@........@@@@     Auckland    
+0240: 40404040 40404040 40404040 40404040  @@@@@@@@@@@@@@@@                 
+0250: 4040d5e9 40404040 40404040 40404040  @@..@@@@@@@@@@@@   NZ            
+0260: 40404040 40404040 4040e2c1 d3c5f0f1  @@@@@@@@@@......           SALE01
+0270: 40404040 40404040 40404040 40404040  @@@@@@@@@@@@@@@@                 
+0280: 40404040 40404040 40404040 00000000  @@@@@@@@@@@@....             ....
+0290: 0f000000 000f0000 00000f00 0000000f  ................ ................
+02a0: 00000000 0f000000 000f4040 40000000  ..........@@@... ..........   ...
+02b0: 000f0000 00000f00 0000000f 00000000  ................ ................
+02c0: 0f000000 000f0000 00000f40 40400000  ...........@@@.. ...........   ..
+02d0: 00000f00 0000000f 00000000 0f000000  ................ ................
+02e0: 000f0000 00000f00 0000000f 40404000  ............@@@. ............   .
+02f0: 0000000f 00000000 0f000000 000f0000  ................ ................
+0300: 00000f00 0000000f 00000000 0f404040  .............@@@ .............   
+0310: 00000000 0f000000 000f0000 00000f00  ................ ................
+0320: 0000000f 00000000 0f000000 000ff0f0  ................ ..............00
+0330: f0f0f0f0 f0f0f0f0 f0f0f0f0 f0f0f0f0  ................ 0000000000000000
+      9 lines same as above ...
+03d0: f0f04040 40404040 40404040 40404040  ..@@@@@@@@@@@@@@ 00              
+03e0: 40000000 00000000 00000000 00000000  @...............  ...............
+\end{verbatim}
+
+\subsection{Parsed Binary Message}
+\label{appendix01:binarymessageexample:parsedmessage}
+\begin{verbatim}
+1 URBRs[0]: 
+  2 URBRISN {class java.lang.Integer}: 39152
+  2 URBRTIME {class java.util.Date}: Wed Jan 15 11:22:13 CET 2025
+  2 URBD_AFTER
+   3 URBDDSNR {class java.lang.Integer}: 1
+   3 URBDTYP {class com.softwareag.adabas.replicatorparser
+                .dataelements.URBD$DataType}: AFTER
+   3 URBD_PAYLOAD
+    4 ADDRESS_LINE
+    4   [0] {class java.lang.String}: Line 1
+    4   [1] {class java.lang.String}: Line 2
+    4   [2] {class java.lang.String}: Line 3
+    4   [3] {class java.lang.String}: Line 4
+    4   [4] {class java.lang.String}: Line 5
+    4 LEAVE_TAKEN {class java.lang.Long}: 0
+    4 PERSONNEL-ID {class java.lang.String}: D2345680
+    4 POSTCODE {class java.lang.String}: 
+    4 MARSTAT {class java.lang.String}: 
+    4 SEX {class java.lang.String}: 
+    4 AREACODE {class java.lang.String}: 
+    4 PHONE {class java.lang.String}: 
+    4 LANG
+    4 FIRST_NAME {class java.lang.String}: Max
+    4 NAME {class java.lang.String}: Johnson
+    4 LEAVE_BOOKED
+    4   [0] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [1] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [2] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [3] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [4] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [5] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [6] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [7] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [8] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4   [9] {class java.util.LinkedHashMap}: {LEAVE_START=0, LEAVE_END=0}
+    4 CITY {class java.lang.String}: Auckland
+    4 COUNTRY {class java.lang.String}: NZ
+    4 S_BIRTH {class java.lang.Long}: 0
+    4 INCOME
+    4   [0] {class java.util.LinkedHashMap}:
+                {CURRCODE=, SALARY=0, BONUS=[0, 0, 0, 0, 0]}
+    4   [1] {class java.util.LinkedHashMap}:
+                {CURRCODE=, SALARY=0, BONUS=[0, 0, 0, 0, 0]}
+    4   [2] {class java.util.LinkedHashMap}:
+                {CURRCODE=, SALARY=0, BONUS=[0, 0, 0, 0, 0]}
+    4   [3] {class java.util.LinkedHashMap}:
+                {CURRCODE=, SALARY=0, BONUS=[0, 0, 0, 0, 0]}
+    4   [4] {class java.util.LinkedHashMap}:
+                {CURRCODE=, SALARY=0, BONUS=[0, 0, 0, 0, 0]}
+    4 MIDDLE_NAME {class java.lang.String}: W.
+    4 DEPT {class java.lang.String}: SALE01
+    4 BIRTH {class java.util.Date}: Mon Jan 11 23:28:23 CET 1904
+    4 LEAVE_DUE {class java.lang.Long}: 0
+    4 JOBTITLE {class java.lang.String}: 
+  2 URBRTYP {class com.softwareag.adabas.replicatorparser
+                .dataelements.URBR$UpdateType}: INSERT
+  2 URBRFNR {class java.lang.Integer}: 1
+ 1 URBTTTIM {class java.util.Date}: Wed Jan 15 11:22:13 CET 2025
+ 1 URBTTSNR {class java.lang.Integer}: 1978
+ 1 URBTSNAM {class java.lang.String}: EMPL
+\end{verbatim}
+
+\section{Docker Compose Files for Deployment in Azure}
+\subsection{Connect Worker in Standalone Mode}
+The Connect worker is started from a custom image stored in an on-premise repository and contains the custom connector code. When in standalone mode, the connector is started as soon as the worker is running. The configuration can be included as environment variables in the compose file. However, in this case, they are in a separate configuration file that is already in the custom image.
+\begin{lstlisting}[frame=tb,caption={Docker Compose file for starting standalone Connect worker},label=lst:dockercomposestandalone]
+
+\end{lstlisting}
+\begin{lstlisting}[frame=tb,caption={Connect Worker configuration (distributed mode)},label=lst:connectworkerconfig]
+
+\end{lstlisting}
+
+% \section{Azure Examples}
+\section{Terraform Example: Provisioning VMs for Kafka Connect Workers (Source connector)}
+\begin{lstlisting}[frame=tb,caption={Terraform script sample},label=lst:terraform]
+resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
+  count               = 1
+  name                = "kafka-source-connector-${count.index}"
+  resource_group_name = azurerm_resource_group.kafka-replication-rg.name
+  location            = azurerm_resource_group.kafka-replication-rg.location
+  size                = "Standard_D2as_v4"
+  admin_username      = "y508771"
+  network_interface_ids = [
+    azurerm_network_interface.kafka-source-connector-nic[count.index].id
+  ]
+
+  connection {
+    type        = "ssh"
+    user        = "y508771"
+    private_key = file("ssh/terraform")
+    host        = self.private_ip_address
+  }
+
+  provisioner "file" {
+    source      = "../source-connector-${count.index}-docker-compose.yml"
+    destination = "docker-compose.yml"
+  }
+
+  provisioner "file" {
+    source      = "certs/SAGCA0.crt"
+    destination = "SAGCA0.crt"
+  }
+
+  provisioner "file" {
+    source      = "certs/SAGCA1.crt"
+    destination = "SAGCA1.crt"
+  }
+
+  provisioner "file" {
+    source      = "certs/SAGCA2.crt"
+    destination = "SAGCA2.crt"
+  }
+
+  provisioner "file" {
+    source      = "scripts/run-script.sh"
+    destination = "run-script.sh"
+  }
+
+  custom_data = filebase64("scripts/vmscript.tpl")
+
+  tags = {
+    responsible = "y508771_tf"
+  }
+
+  admin_ssh_key {
+    username   = "y508771"
+    public_key = file("ssh/terraform.pub")
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "StandardSSD_LRS"
+    disk_size_gb         = 30
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+}
+\end{lstlisting}

@@ -125,25 +125,17 @@
  1 URBTSNAM {class java.lang.String}: EMPL
 \end{verbatim}
 
-\section{Docker Compose Files for Deployment in Azure}
-\subsection{Connect Worker in Standalone Mode}
-The Connect worker is started from a custom image stored in an on-premise repository and contains the custom connector code. When in standalone mode, the connector is started as soon as the worker is running. The configuration can be included as environment variables in the compose file. However, in this case, they are in a separate configuration file that is already in the custom image.
-\begin{lstlisting}[frame=tb,caption={Docker Compose file for starting standalone Connect worker},label=lst:dockercomposestandalone]
-
-\end{lstlisting}
-\begin{lstlisting}[frame=tb,caption={Connect Worker configuration (distributed mode)},label=lst:connectworkerconfig]
-
-\end{lstlisting}
-
 % \section{Azure Examples}
-\section{Terraform Example: Provisioning VMs for Kafka Connect Workers (Source connector)}
-\begin{lstlisting}[frame=tb,caption={Terraform script sample},label=lst:terraform]
+\section{Terraform Example: Provisioning Connect Worker}
+The Connect worker is started from a custom image stored in an on-premise repository and contains the custom connector code. Listing \ref{lst:terraform} demonstrates the provisioning of a single Kafka Connect worker. The number of \ac{VM}s provisioned can be changed with the \textit{count} attribute. Additional files are included in the instance, such as certificates for accessing the on-prem repository, as well as the \ac{FDT} metadata for the \ac{REPTOR} Parser.
+% Additional files added such as certs not included. Mention vmscript. or add entire script?
+\begin{lstlisting}[frame=tb,caption={Terraform script for starting Source Connector Worker},label=lst:terraform]
 resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
   count               = 1
   name                = "kafka-source-connector-${count.index}"
-  resource_group_name = azurerm_resource_group.kafka-replication-rg.name
-  location            = azurerm_resource_group.kafka-replication-rg.location
-  size                = "Standard_D2as_v4"
+  resource_group_name = data.azurerm_resource_group.kafka-replication-rg.name
+  location            = data.azurerm_resource_group.kafka-replication-rg.location
+  size                = var.kafka_vm_instance
   admin_username      = "y508771"
   network_interface_ids = [
     azurerm_network_interface.kafka-source-connector-nic[count.index].id
@@ -152,36 +144,59 @@ resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
   connection {
     type        = "ssh"
     user        = "y508771"
-    private_key = file("ssh/terraform")
+    private_key = file("../ssh/terraform")
     host        = self.private_ip_address
   }
 
+  
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir jmx-exporter",
+      "mkdir metadata"
+    ]
+  }
+
   provisioner "file" {
-    source      = "../source-connector-${count.index}-docker-compose.yml"
+    source      = "../docker-compose-files/source-connector-${count.index}-docker-compose.yml"
     destination = "docker-compose.yml"
   }
 
   provisioner "file" {
-    source      = "certs/SAGCA0.crt"
+    source      = "../certs/SAGCA0.crt"
     destination = "SAGCA0.crt"
   }
 
   provisioner "file" {
-    source      = "certs/SAGCA1.crt"
+    source      = "../certs/SAGCA1.crt"
     destination = "SAGCA1.crt"
   }
 
   provisioner "file" {
-    source      = "certs/SAGCA2.crt"
+    source      = "../certs/SAGCA2.crt"
     destination = "SAGCA2.crt"
   }
 
   provisioner "file" {
-    source      = "scripts/run-script.sh"
+    source      = "../scripts/run-script.sh"
     destination = "run-script.sh"
   }
 
-  custom_data = filebase64("scripts/vmscript.tpl")
+  provisioner "file" {
+    source      = "jmx-exporter/jmx_prometheus_javaagent-1.0.1.jar"
+    destination = "jmx-exporter/jmx_prometheus_javaagent-1.0.1.jar"
+  }
+
+  provisioner "file" {
+    source      = "jmx-exporter/kafka-connect.yml"
+    destination = "jmx-exporter/kafka-connect.yml"
+  }
+
+  provisioner "file" {
+    source      = "metadata/EMPL.json"
+    destination = "metadata/EMPL.json"
+  }
+
+  custom_data = filebase64("../scripts/vmscript.tpl")
 
   tags = {
     responsible = "y508771_tf"
@@ -189,7 +204,7 @@ resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
 
   admin_ssh_key {
     username   = "y508771"
-    public_key = file("ssh/terraform.pub")
+    public_key = file("../ssh/terraform.pub")
   }
 
   os_disk {
@@ -205,4 +220,140 @@ resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
     version   = "latest"
   }
 }
+\end{lstlisting}
+
+\section{Docker Compose Example: Starting Metrics Collection}
+
+
+\begin{lstlisting}[frame=tb,caption={Docker compose for metrics collection},label=lst:dockercomposemetrics]
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    environment:
+      STORAGE_TYPE: elasticsearch
+      ES_HOSTS: http://elasticsearch1:9200,http://elasticsearch2:9200,http://elasticsearch3:9200
+      KAFKA_BOOTSTRAP_SERVERS: 10.94.101.4:9092,10.94.101.5:9092,10.94.101.6:9092
+      JAVA_OPTS: "-Xms32g -Xmx32g -XX:+ExitOnOutOfMemoryError"
+    depends_on:
+      elasticsearch1:
+        condition: service_healthy
+      elasticsearch2:
+        condition: service_healthy
+      elasticsearch3:
+        condition: service_healthy
+    ports:
+      - 9411:9411
+    volumes:
+      - zipkin-data:/usr/share/elasticsearch/data
+  elasticsearch1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.2
+    container_name: elasticsearch1
+    environment:
+      - node.name=elasticsearch1
+      - cluster.name=es689-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
+      - xpack.security.enabled=false
+      - discovery.seed_hosts=elasticsearch1,elasticsearch2,elasticsearch3
+      - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
+      - network.host=0.0.0.0
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9201:9200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - es1:/usr/share/elasticsearch/data
+
+  elasticsearch2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.2
+    container_name: elasticsearch2
+    environment:
+      - node.name=elasticsearch2
+      - cluster.name=es689-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
+      - xpack.security.enabled=false
+      - discovery.seed_hosts=elasticsearch1,elasticsearch2,elasticsearch3
+      - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
+      - network.host=0.0.0.0
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9202:9200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - es2:/usr/share/elasticsearch/data
+
+  elasticsearch3:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.2
+    container_name: elasticsearch3
+    environment:
+      - node.name=elasticsearch3
+      - cluster.name=es689-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
+      - xpack.security.enabled=false
+      - discovery.seed_hosts=elasticsearch1,elasticsearch2,elasticsearch3
+      - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
+      - network.host=0.0.0.0
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9203:9200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - es3:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.16.2
+    container_name: kibana
+    ports:
+      - 443:5601
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200","http://elasticsearch2:9200","http://elasticsearch3:9200"]
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - "9095:9090"
+    volumes:
+      - ./prometheus/prometheus-config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+volumes:
+  es1:
+  es2:
+  es3:
+  zipkin-data:
+  grafana-data:
+  prometheus-data:
 \end{lstlisting}

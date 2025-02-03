@@ -4,33 +4,35 @@ To address the research question \textbf{"How does the performance of a Kafka Co
 
 \section{Experiment Design}
 \label{ch05:methodology:design}
-The experiment involves generating a large volume of create or update changes in Adabas in order to test the throughput of both systems over a period of time. Due to one system being composed of a single component, \ac{ART}, while the replication pipeline consists of at least 3 components (based on the degree of parallelization and distributedness), there were two throughput metrics chosen that provide comparable results. This involves measuring the number of \textbf{transactions per second}, as well as \textbf{messages per second}. In the case of Kafka replication, \textit{messages} refers to the number of total Kafka events being transferred in the pipeline. As explained in \ref{ch04:pipelinedevelopment:implementation:transformingtorelational}, due to each Adabas record being normalized and split into smaller records (to be added to different relational tables), there is more traffic in the pipeline than just the changed Adabas record. This makes it difficult to compare it to the way that \ac{ART} works, as \ac{ART} processes the entire XML \ac{REPTOR} message that it receives and splits the XML internally before writing it to the target database. To have a comparable metric of messages per second, it will instead be tracked by how many "table rows" (identical to the split records in Kafka) resulted in \ac{ART} before being written to the target database. The metric of transaction throughput is more straightforward, as both solutions process the same total number of transactions.
+The experiment involves generating a large volume of create or update changes in Adabas in order to test the throughput of both systems over a period of time. Due to one system being composed of a single component, \ac{ART}, while the replication pipeline consists of at least 3 components (based on the degree of parallelization and distributedness), two throughput metrics were chosen that provide comparable results. This included measuring the number of \textbf{transactions per second}, as well as \textbf{messages per second}. In the case of Kafka replication, \textit{messages} refers to the number of total Kafka events transferred in the pipeline. As explained in \ref{ch04:pipelinedevelopment:implementation:transformingtorelational}, due to each Adabas record being normalized and split into smaller records (to be added to different relational tables), there is more traffic in the pipeline than just the changed Adabas record. This makes it difficult to compare it to the way that \ac{ART} works, as \ac{ART} processes the entire XML \ac{REPTOR} message that it receives and splits the XML internally before writing it to the target database. To have a comparable metric of messages per second, it was instead be tracked by how many "table rows" (identical to the split records in Kafka) resulted in \ac{ART} before being written to the target database. The metric of transaction throughput is more straightforward, as both solutions process the same total number of transactions.
 
-The message and transaction throughput of the Kafka connectors and \ac{ART} are measured with Zipkin. In the case of the Kafka connectors, there is already built-in Zipkin support using so-called Kafka interceptors\footnote{\url{https://github.com/openzipkin-contrib/brave-kafka-interceptor}} to capture the Zipkin traces. For \ac{ART} and for transaction tracing, custom Zipkin traces were implemented using the Brave\footnote{\url{https://github.com/openzipkin/brave}} library. To measure the message throughput of the Kafka brokers, \ac{JMX} metrics were used. Unfortunately, the existing \ac{JMX} metrics do not support measuring the transaction throughput. The experiment is operating under the assumption that the Kafka brokers will not be the performance bottleneck in the replication pipeline if the brokers are configured in a way to optimize parallelization. This can be done by increasing the number of partitions in the Kafka topic, allowing the throughput to be increased through the higher degree of parallelization \cite{cerezo2021analysisparallelism}. Therefore, the performance metrics will be evaluated without taking the broker transaction throughput into account.
+The message and transaction throughput of the Kafka connectors and \ac{ART} were measured with Zipkin. In the case of the Kafka connectors, there is already built-in Zipkin support using so-called Kafka interceptors\footnote{\url{https://github.com/openzipkin-contrib/brave-kafka-interceptor}} to capture the Zipkin traces. For \ac{ART} and for transaction tracing, custom Zipkin traces were implemented using the Brave\footnote{\url{https://github.com/openzipkin/brave}} library. To measure the message throughput of the Kafka brokers, \ac{JMX} metrics were used. Unfortunately, the existing \ac{JMX} metrics do not support measuring the transaction throughput of the brokers. Therefore, the performance metrics will be evaluated without taking into account the broker transaction throughput. If the broker(s) become the bottleneck, this can also be identified by monitoring the message throughput.
+% The experiment is operating under the assumption that the Kafka brokers will not be the performance bottleneck in the replication pipeline if the brokers are configured in a way to optimize parallelization. This can be done by increasing the number of partitions in the Kafka topic, allowing throughput to be increased through a higher degree of parallelization \cite{cerezo2021analysisparallelism}. Therefore, the performance metrics will be evaluated without taking into account the broker transaction throughput.
 % can look at byte throughput of entire kafka system (not comparable to art though) to see which system is the bottleneck?
-The experiment was also intentionally designed to measure the throughput of components up until the data reaches the \ac{JDBC} driver. This allows for the disregard for any latencies that result from the insert or update operations to the target database. The target relational database used for the experiment will be Postgres due to existing familiarity with it.
+The experiment was also intentionally designed to measure the throughput of components up until the data reaches the \ac{JDBC} driver. This allows for the disregard for any latencies that result from the upsert operations to the target database. The target relational database used for the experiment was be Postgres due to existing familiarity with it.
+% maybe include that want to isolate performance and not include database variability - however, database can still be a bottleneck
 
-Due to the upsert nature of the \ac{JDBC} sink connector (see \ref{ch04:pipelinedevelopment:parallelizationconsiderations}), there is no real difference between insert and update operations for the replication pipeline. Since latencies regarding the target database operations and any delete operations are outside of the scope, the \ac{IS} operations can be used for simulating a high throughput situation. This makes it easier to prepare the Adabas file beforehand, as the data has to be inserted only once, and there is no need to delete or re-insert records for every experiment run. This helps not only with saving time between each run, but also with reproducibility, as the number of records, record content, and transaction content remain the same.
+Due to the upsert nature of the \ac{JDBC} sink connector (see \ref{ch04:pipelinedevelopment:parallelizationconsiderations}), there is no real difference between insert and update operations for the replication pipeline. Since latencies with respect to target database operations and any delete operations are outside of the scope, the \ac{IS} operations were used to simulate a high-throughput situation. This made it easier to prepare the Adabas file beforehand, as the data had to be inserted only once, and there was no need to delete or re-insert records for every experiment run. This helped not only with saving time between each run, but also with reproducibility, as the number of records, record content, and transaction content remain the same.
 
-There are multiple different Kafka pipeline setups which will be tested against the \ac{ART} solution, both to prove whether or not parallelization will play a decisive factor in outperforming \ac{ART}, and which pipeline setup will ensure maximum performance. The scenarios will be as follows:
+There were multiple different Kafka pipeline setups which were tested against the \ac{ART} solution, to prove whether or not parallelization will play a decisive factor in outperforming \ac{ART}, and to see which pipeline setup will ensure maximum performance. Each scenario was run and measured five times to minimize possible variability. The same was done for measuring the performance of \ac{ART}. The scenarios were as follows:
 \begin{description}
-    \item [One task, One Partition]
-    First, the performance of the replication pipeline will be tested without any parallelism involved: the source and sink connectors will be run on one Connect worker each, with only one task each. There will be a single Kafka broker with only one partition.
+    \item [One Task, One Partition]
+    First, the performance of the replication pipeline was tested without any parallelism involved: the source and sink connectors were run on one Connect worker each, with only one task each. There was a single Kafka broker with only one partition.
 
     \item[Three Tasks (One Worker), Three Partitions]
-    This scenario will test parallelization capabilities of Kafka. There will be three source tasks and three sink tasks. There will be two workers total, one for the sink connector and one for the source connector. There will also be three brokers, so that each broker is partition leader for a single partition.
+    This scenario tested the parallelization capabilities of Kafka. There were three source tasks and three sink tasks. Two workers were used in total, one for the sink connector and one for the source connector. There were also three brokers, each broker being assigned partition leader for a single partition.
 
     \item[Seven Tasks (One Worker), Seven Partitions]
-    This scenario will test the parallelization capabilities of Kafka to a higher degree than the previous scenario. There will be seven source tasks and seven sink tasks, run on one worker each. There will also be seven partitions, balanced among three brokers. The broker number will be kept at three to test whether the brokers can handle a higher partition number\footnote{According to a Confluent blog post, a single Kafka broker can handle multiple thousand partitions and still maintain high availability (\url{https://www.confluent.io/blog/how-choose-number-topics-partitions-kafka-cluster/}).}.
+    This scenario tested the parallelization capabilities of Kafka to a higher degree than in the previous scenario. There were seven source tasks and seven sink tasks, run on one worker each. Seven partitions were configured, balanced among three brokers. The broker number was kept at three to test whether the brokers could handle a higher partition number\footnote{According to a Confluent blog post, a single Kafka broker can handle multiple thousand partitions and still maintain high availability (\url{https://www.confluent.io/blog/how-choose-number-topics-partitions-kafka-cluster/}).}.
 
     \item[Seven Tasks (Two Workers), Seven Partitions]
-    This scenario is similar to the previous one. In this case, however, the seven source tasks and seven sink tasks will be balanced on two Connect workers each. The aim is to provide an insight into whether having multiple workers provides additional throughput improvements.
+    This scenario was similar to the previous one. In this case, however, the seven source tasks and seven sink tasks were balanced on two Connect workers for the source and sink connector each (with four workers in total). The aim was to provide an insight into whether having multiple workers provides additional throughput improvements.
     
     % \item[14 Source, 7 Sink Tasks (Two Workers), Seven Partitions]
     
 \end{description}
 
-In production environments, it is always recommended to enable replication of partitions on different brokers for additional fault tolerance. In the case of this experiment, no replication is enabled, as it can negatively affect Kafka's performance \cite{dobbelaerekafkavsrabbitmq}.
+In production environments, it is always recommended to enable partition replication on different brokers for additional fault tolerance. In the case of this experiment, no replication was enabled, to minimize its effect on Kafka's performance \cite{dobbelaerekafkavsrabbitmq}.
 
 % talk about # of tasks per partition (or vice versa) - tasks partition wise for jdbc connector?
 
@@ -41,7 +43,7 @@ In production environments, it is always recommended to enable replication of pa
 
 \section{Adabas File}
 \label{ch05:methodology:adabasfile}
-One Adabas file will be used for testing the replication performance. It is called \textit{EMPLOYEES}, and contains sample employee data. This file was chosen because it has all of the existing field types described in \ref{ch02:fundamentals:adabas:forzos:datastructures}. Below is the \ac{FDT} showing all of the fields that will be replicated to the target database:
+One Adabas file was used for testing the replication performance. It is called \textit{EMPLOYEES}, and contains sample employee data. This file was chosen because it has all of the existing field types described in \ref{ch02:fundamentals:adabas:forzos:datastructures}. Below is the \ac{FDT} showing all of the fields that will be replicated to the target database:
 \begin{verbatim}
 Field Description Table: File 1     (EMPLOYEES)                              
 ========================                Total Fields without SDT ... 31      
@@ -85,19 +87,44 @@ The \textit{Name} field refers to the Adabas file shortnames, which are used int
 
 \section{Environment Setup with Azure}
 \label{ch05:methodology:environmentsetup}
-% why azure was chosen?
+The experiment was chosen to run on the Azure cloud platform to simulate a production environment. Each Kafka broker, Connect worker and \ac{ART} instance is run on a separate \ac{VM} provisioned in Azure, while Adabas and \ac{REPTOR} are run on a Software GmbH mainframe. Azure was chosen due to an existing corporate subscription and an existing infrastructure. This includes an existing connection to the Software GmbH intranet for access to Adabas, as well as an existing subnet and virtual network.
 
 \subsection{Ensuring Reproducibility}
-- using terraform
+Multiple measures were taken to ensure the reproducibility of the results and control as many variables as possible to minimize variability. Terraform was chosen as an \ac{IaC} tool to allow the provisioning of a testing infrastructure, allowing it to be reproduced at will. This allows more control over the provisioning of \ac{VM}s, as well as the management of the testing environment.
 
-- multiple experiment runs for each scenario (take average?)
+The Ubuntu Server distribution was chosen as the \ac{OS} for all \ac{VM}s due to its open source nature. All applications were containerized using Docker, allowing ease of setup and ensuring consisted and isolated environments for each experiment run. Using Docker simplified the task of stopping and starting new instances of all applications between experiment repetitions, ensuring that previous measurements and actions did not affect the performance of subsequent performance tests.
 
-- restarting VMs for every experiment run
+To control for the effect of hardware on performance, the \ac{VM}s used for hosting \ac{ART} and the Kafka pipeline components were all provisioned with the same specifications. The Azure D-series \ac{VM} was used, as it is optimized for general-purpose production workloads\footnote{\url{https://azure.microsoft.com/en-us/pricing/details/virtual-machines/series/}}. Table \ref{tab:hardwarespecs} lists the important hardware specifications. The Postgres database was run on a machine with identical hardware.
+
+
+\begin{table}
+    \centering
+    \begin{tabular}{|cc|}
+        \hline
+         \textbf{Operating System} & Ubuntu Server 22.04 LTS \\
+         \textbf{Processor} & AMD EPYC 7763 64-Core \\
+         \textbf{Memory} & 16 GiB \\
+         \textbf{vCPUs} & 4 \\
+         \textbf{Max IOPS} & 6400 \\
+        \hline
+    \end{tabular}
+    \caption{Hardware Specifications for Performance Tests}
+    \label{tab:hardwarespecs}
+\end{table}
+
+% - using terraform
+
+% - multiple experiment runs for each scenario (take average?)
+
+% - restarting VMs for every experiment run
 % use of terraform, restarting every time with fresh kafka brokers and connectors - only metrics collection is kept running?
 
 
 \subsection{Kafka-based Solution}
+For the Kafka Connect pipeline, each Connect worker and Kafka broker was run on a separate \ac{VM} to simulate nodes in an actual cluster. An additional \ac{VM} with the same specifications was provisioned as the "control \ac{VM}" to host the schema registry and a web UI of the Kafka cluster. Even when running a single worker for the first experiment scenario, the worker was still run in distributed mode\footnote{"Exactly Once" semantic in the source connector is only available when running in distributed mode (see \ref{ch04:pipelinedevelopment:solutionlimitations})}. Listing \ref{lst:terraform} shows an example Terraform script used to provision a source connect worker.
 
 \subsection{Target Adapter}
+As \ac{ART} does not support parallelization, it was run as a single \ac{VM} instance with the same specifications shown in Table \ref{tab:hardwarespecs}. The message and transaction throughput was tracked using Zipkin and Elasticsearch.
 
 \subsection{Metrics Collection}
+The metrics collection was performed using Grafana and Prometheus for the \ac{JMX} metrics, and Zipkin, Elasticsearch, and Kibana for the message and transaction tracing. Due to the high memory requirements for Zipkin and Elasticsearch, all metrics collection was hosted on an on-premise machine with a high amount of available memory. All components were also started as Docker containers. The Elasticsearch cluster was configured with three nodes to handle the high volume in message traces that had to be collected. Listing \ref{lst:dockercomposemetrics} shows the Docker compose configuration for starting the metrics collection.

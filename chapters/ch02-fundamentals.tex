@@ -71,7 +71,7 @@ As shown in Figure \ref{fig:fundamentals:reptorarchitecture}, any record changes
 
 \subsubsection{EntireX Broker}
 \label{ch02:fundamentals:adabas:entirex}
-The message queue covered in this thesis is the EntireX Broker, as it was already being used internally for development. The EntireX Broker acts as message-oriented middleware, allowing reliable communication with high performance and availability \cite{entirexbrokerintro}. It supports transactional integrity by using units of work\footnote{Not to be confused with the transactional \ac{UOW} from \ref{ch02:fundamentals:adabas:forzos:transactions}} to group together messages, which are then treated by the Broker as an atomary unit. Message delivery is guaranteed by the receiver application, which must send a COMMIT acknowledgement for each \ac{UOW} received. If a client receives the \ac{UOW} and processes it but does not send a COMMIT message to the Broker, that specific \ac{UOW} can be re-delivered to the message queue, marked as timed out, or processed in some other way based on the broker configuration \cite{entirexbrokeradmin}. This is useful in the case that a client application receives the messages but fails or crashes before it is able to process them fully, preventing a COMMIT message from being sent. In that case, it would be necessary for all the messages within the unprocessed \ac{UOW} to be re-processed by the client application once it is running again.
+The message queue covered in this thesis is the EntireX Broker, as it was already being used internally for development. The EntireX Broker acts as message-oriented middleware, allowing reliable communication with high performance and availability \cite{entirexbrokerintro}. It supports transactional integrity by using units of work\footnote{Not to be confused with the transactional \ac{UOW} from \ref{ch02:fundamentals:adabas:forzos:transactions}.} to group together messages, which are then treated by the Broker as an atomary unit. Message delivery is guaranteed by the receiver application, which must send a COMMIT acknowledgement for each \ac{UOW} received. If a client receives the \ac{UOW} and processes it but does not send a COMMIT message to the Broker, that specific \ac{UOW} can be re-delivered to the message queue, marked as timed out, or processed in some other way based on the broker configuration \cite{entirexbrokeradmin}. This is useful in the case that a client application receives the messages but fails or crashes before it is able to process them fully, preventing a COMMIT message from being sent. In that case, it would be necessary for all the messages within the unprocessed \ac{UOW} to be re-processed by the client application once it is running again.
 
 \subsection{Event Replicator Target Adapter}
 \label{ch02:fundamentals:adabas:art}
@@ -80,8 +80,45 @@ The Event Replicator Target Adapter (\ac{ART}) is another Software GmbH product 
 \ac{ART} can be installed using the Software GmbH installer, which also provides the Administration tool for a graphical user interface and a Replication Monitoring tool to visualize the status of the \ac{REPTOR} \cite{artconcepts}. However, it can also run headless as a Dockerized instance, with the XML configuration files added manually.
 
 \subsubsection{Schema Transformation}
-To allow Adabas records to be inserted into a relational database, they first have to be flattened and normalized if they contain any of the aforementioned data structures from \ref{ch02:fundamentals:adabas:forzos:datastructures}. (To be appended)
-% consult ART documentation
+\label{ch02:fundamentals:adabas:art:schematransformation}
+To allow Adabas records to be inserted into a relational database, they first have to be flattened and normalized if they contain any of the aforementioned data structures from \ref{ch02:fundamentals:adabas:forzos:datastructures}. \ac{ART} has a Data Mapping Tool for defining a custom relational schema for the target. There also exists a default transformation \cite{artconcepts}. The following data structures are affected in the default transformation \cite{artconcepts}:
+\begin{description}
+\item [Group fields]
+Group fields are flattened by adding the child fields directly to the root table. In the case of the group field FULLNAME from Figure \ref{fig:fundamentals:datastructure}, the table will contain the fields FIRST\_NAME, NAME, and MIDDLE\_NAME.
+\item [Multiple fields]
+Each MU field is mapped to a separate relational table, where each value is represented as a separate row with the possibility of tracking the MU index\footnote{An index, or occurrence, indicates the position of the value in the repeating MU or PE field.} as a separate column. The LANG field in Figure \ref{ch02:fundamentals:adabas:forzos:datastructures} is an MU field with three occurrences. Listing \ref{lst:bonusmuquery}  shows how the MU field would be structured in the table. The foreign key constraint is inherited from the root table primary key(s). 
+\item[Periodic groups]
+Each PE group is also mapped to a separate relational table. Each sub-field in the periodic group is represented by a column in the table. An additional index field is created, composed from the \ac{ISN} and PE field index, which serves as the primary key. The foreign key constraint that references the root table is on the \ac{ISN} field. An example PE field can be seen in listing \ref{lst:bonusmuquery}.
+
+In the case of an MU field in a PE group, a separate table is created with the same logic as a typical MU table, except that an IX2 field is used instead of the IX field to show its nested nature. The aforementioned composed index field is also added to the new MU table with a foreign key constraint referencing the parent PE table. An example MU field in a PE group can be seen in Listing \ref{lst:bonusmupequery}.
+% TODO: pk and fk fields of the index, reference listing
+\end{description}
+
+\begin{lstlisting}[frame=tb,caption={Query result of the MU field LANG in the relational table EMPL\_LANG},label=lst:bonusmuquery]
+ ISN | LANG | LANG_IX
+-----+------+---------
+   1 | FRE  |       1
+   1 | ENG  |       2
+   1 | SPA  |       3
+\end{lstlisting}
+
+\begin{lstlisting}[frame=tb,caption={Query result of the PE field INCOME in the relational table EMPL\_INCOME},label=lst:incomepequery]
+  ISN   | INCOME_INDEX | ISN_INCOME_INDEX | CURRCODE | SALARY
+--------+--------------+------------------+----------+--------
+      1 |            1 |      1_1         | BER      |  50000
+      1 |            2 |      1_2         | FRA      |  40000
+\end{lstlisting}
+\newpage
+\begin{lstlisting}[frame=tb,caption={Query result of the MU field BONUS in the PE field INCOME in the relational table EMPL\_INCOME\_BONUS},label=lst:bonusmupequery]
+ ISN_INCOME_INDEX | BONUS | BONUS_IX2
+------------------+-------+-----------
+ 1_1              |  5000 |         1
+ 1_1              |  2000 |         2
+ 1_1              |  2000 |         3
+ 1_2              |  2500 |         1
+ 1_2              |  2000 |         2
+\end{lstlisting}
+
 
 \subsubsection{Drawbacks of the Target Adapter}
 \label{ch02:fundamentals:adabas:art:limitations}
@@ -125,7 +162,7 @@ Figure \ref{fig:fundamentals:kafkaconnectarchitecture} shows the possible archit
 
 \begin{figure}[htbp]
  \centering
- \includegraphics[width=1\textwidth]{chapters/images/kafka connect architecture.drawio.png}
+ \includegraphics[width=1\textwidth]{chapters/images/kafka connect architecture enlarged.drawio.png}
  \caption{Example Architecture of a Kafka Source Connector in Distributed Mode}
  \label{fig:fundamentals:kafkaconnectarchitecture}
 \end{figure}

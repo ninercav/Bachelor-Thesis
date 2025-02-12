@@ -1,15 +1,17 @@
 \chapter{Fundamentals}
 \label{ch02:fundamentals}
+This chapter covers the technological fundamentals important for the scope of this thesis. The two main technologies covered are Adabas and Kafka, including associated products and software.
 
 \section{Adabas}
 \label{ch02:fundamentals:adabas}
-Adabas, short for \textbf{Ada}ptable Data\textbf{ba}se \textbf{S}ystem, is a high-performance transactional \ac{DBMS} first launched on a mainframe in 1971. Since then, Adabas has grown to also become available on a variety of systems, including Microsoft Windows, Linux, and other Unix-based platforms. It now includes a range of products, both for the mainframe and \ac{LUW} versions \cite{adabasconcepts}. As the thesis scope is restricted to Adabas on mainframes, the focus of the following fundamentals will be on Adabas for z/OS.
+This section covers Adabas-related fundamentals. This includes Adabas itself, as well as related products such as the Event Replicator and Target Adapter.
 
 \subsection{Adabas for z/OS}
 \label{ch02:fundamentals:adabas:forzos}
+Adabas, short for \textbf{Ada}ptable Data\textbf{ba}se \textbf{S}ystem, is a high-performance transactional \ac{DBMS} first launched on a mainframe in 1971. Since then, Adabas has grown to also become available on a variety of systems, including Microsoft Windows, Linux, and other Unix-based platforms. It now includes a range of products, both for the mainframe and \ac{LUW} versions \cite{adabasconcepts}. As the thesis scope is restricted to Adabas on mainframes, the focus of the following fundamentals will be on Adabas for z/OS.
 % important adabas terminology for understanding paper
 \subsubsection{Adabas Terminology}
-To understand Adabas, there are a few definitions fundamental to it that have to be addressed. As a \ac{DBMS}, Adabas can manage multiple databases. Each \textit{database} is a collection of \textit{files}, which are best compared to tables in a relational database. Each file is a "group of related \textit{records}" \cite{adabasconcepts}, which in turn are a "collection of related \textit{fields}" % that make up a complete unit of information???
+To understand Adabas, there are a few fundamental definitions to it that have to be addressed. As a \ac{DBMS}, Adabas can manage multiple databases. Each \textit{database} is a collection of \textit{files}, which are best compared to tables in a relational database. Each file is a "group of related \textit{records}" \cite{adabasconcepts}, which in turn are a "collection of related \textit{fields}" % that make up a complete unit of information???
 \cite{adabasconcepts}. Records are comparable to a table row in a relational database, as they usually represent the entire data unit of the represented entity (for example the data of a single employee). The record fields represent the "smallest logical unit of information" \cite{adabasconcepts} and can be grouped into different denormalized data structures.
 
 \subsubsection{Classifying Adabas}
@@ -45,7 +47,7 @@ All of the fields in a file are specified in the \ac{FDT}, which is then used to
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=1\textwidth]{chapters/images/datastructures.png}
- \caption{Example structure of a record containing various Adabas data structures}
+ \caption[Example structure of a record containing various Adabas data structures]{Example structure of a record containing various Adabas data structures (see \ref{fig:appendix02:results:artavgmessage} for enlarged version)}
  \label{fig:fundamentals:datastructure}
 \end{figure}
 
@@ -61,7 +63,7 @@ The \ac{REPTOR} was developed by Software GmbH as a replication solution for cap
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=0.8\textwidth]{chapters/images/reptor_architecture.png}
- \caption{Adabas and Event Replicator Components \cite{reptorconcepts}}
+ \caption[Adabas and Event Replicator Components]{Adabas and Event Replicator Components \cite{reptorconcepts}}
  \label{fig:fundamentals:reptorarchitecture}
 \end{figure}
 
@@ -108,7 +110,7 @@ In the case of an MU field in a PE group, a separate table is created with the s
       1 |            1 |      1_1         | BER      |  50000
       1 |            2 |      1_2         | FRA      |  40000
 \end{lstlisting}
-\newpage
+% \newpage
 \begin{lstlisting}[frame=tb,caption={Query result of the MU field BONUS in the PE field INCOME in the relational table EMPL\_INCOME\_BONUS},label=lst:bonusmupequery]
  ISN_INCOME_INDEX | BONUS | BONUS_IX2
 ------------------+-------+-----------
@@ -126,10 +128,10 @@ There have been some performance concerns noted both by clients and developers w
 
 \section{The Kafka Ecosystem}
 \label{ch02:fundamentals:apachekafkaandkafkaconnect}
-
+This section covers fundamentals related to the Kafka ecosystem. It introduces Apache Kafka, as well as the Kafka Connect framework and Schema Registry.
 \subsection{Apache Kafka}
 \label{ch02:fundamentals:apachekafkaandkafkaconnect:apachekafka}
-Apache Kafka is a distributed event streaming platform developed by LinkedIn and currently managed by the Apache Foundation, offering high-throughput and fault-tolerant data processing. A behemoth of streaming possibilities, it runs as a cluster of one or more machines called \textit{brokers}. They organize incoming messages (also called events by Kafka) in \textit{topics}, which can be asynchronously published to with \textit{producers} and consumed from by \textit{consumers} \cite{peddireddystreamliningprocessingkafka}. To facilitate scalability and distributed processing, a topic can be divided into multiple \textit{partitions}. Message order is only guaranteed for a single partition, so that if two messages are added in a consequent order to two different partitions, they will not necessarily be consumed in the same order. Messages are organized by a sequential \textit{offset} number in each partition \cite{thein2014apache}.
+Apache Kafka is a distributed event streaming platform developed by LinkedIn and currently managed by the Apache Foundation, offering high-throughput and fault-tolerant data processing. A behemoth of streaming possibilities, it runs as a cluster of one or more machines called \textit{brokers}. They organize incoming messages (also called events by Kafka) in \textit{topics}, which can be asynchronously published to with \textit{producers} and consumed from by \textit{consumers} \cite{peddireddystreamliningprocessingkafka}. To facilitate scalability and parallel processing, a topic can be divided into multiple \textit{partitions}. Message order is only guaranteed for a single partition, so that if two messages are added in a consequent order to two different partitions, they will not necessarily be consumed in the same order. Messages are organized by a sequential \textit{offset} number in each partition \cite{thein2014apache}.
 
 There are different strategies for determining which partition a message is assigned to. The default strategy involves hashing the message key to map it to a partition. If the key is null, either the "sticky partition" strategy is used (where messages get produced to one partition until a certain batch size is achieved) or the round-robin strategy. Kafka also supports writing custom partitioners to implement a specialized partitioning strategy  \cite{kafkadocumentation}.
 
@@ -152,7 +154,7 @@ Kafka Connect has two modes: standalone and distributed. In standalone mode, the
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=0.6\textwidth]{chapters/images/kafkaconnectexample.png}
- \caption{Visualization of Kafka Connect with Sink and Source Connector \cite{maison2023kafkaconnect}}
+ \caption[Visualization of Kafka Connect with Sink and Source Connector]{Visualization of Kafka Connect with Sink and Source Connector \cite{maison2023kafkaconnect}}
  \label{fig:fundamentals:kafkaconnectexample}
 \end{figure}
 
@@ -163,7 +165,7 @@ Figure \ref{fig:fundamentals:kafkaconnectarchitecture} shows the possible archit
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=1\textwidth]{chapters/images/kafka connect architecture enlarged.drawio.png}
- \caption{Example Architecture of a Kafka Source Connector in Distributed Mode}
+ \caption[Example Architecture of a Kafka Source Connector in Distributed Mode]{Example Architecture of a Kafka Source Connector in Distributed Mode (see \ref{fig:appendix02:kafkaconnectarchitecture} for enlarged version)}
  \label{fig:fundamentals:kafkaconnectarchitecture}
 \end{figure}
 

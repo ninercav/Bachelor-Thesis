@@ -1,8 +1,8 @@
 \chapter{Introduction}
 \label{ch01:intro}
 
-\section{Motivation}
-\label{ch01:intro:motivation}
+% \section{Motivation}
+% \label{ch01:intro:motivation}
 With the ever-present and rapid technological progress, it remains important to keep in mind that legacy systems do not simply disappear with every new advancement. Legacy systems like Adabas, a 1971 non-relational database, remain essential for enterprise applications requiring high-volume transaction processing. However, the use of systems like Adabas represent challenges in integrating them with modern systems and use cases, especially since Adabas programs are mostly written using the proprietary Natural language. This increases the difficulty and cost of maintance \cite{ibm_redpaper_key}. In some enterprise cases, a relational database is preferred on top of the existing Adabas hosted on mainframe. The benefits can include the flexibility and widespread use of SQL queries, triggers, referential constraints, and a more simplified integration with modern systems \cite{ibm_redpaper_key}.
 
 To modernize Adabas, the \ac{ART} for Adabas on z/OS was developed for the replication of Adabas changes to other systems. A proprietary product of Software AG, it supports the replication to various supported systems, called \textit{targets}. The majority of supported targets are relational databases such as MySQL, PostgreSQL, and DB2. \ac{ART} also supports replicating to Adabas on \ac{LUW} or to Kafka. % write about why replication to other systems is important

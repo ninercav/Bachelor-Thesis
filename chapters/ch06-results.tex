@@ -28,7 +28,7 @@ This chapter presents the performance results of \ac{ART} and various Kafka repl
     \label{fig:chapter06:results:artavgmessage}
 \end{figure}
 
-The visualization of the transaction throughput can be seen in Figure \ref{fig:chapter06:results:artavgtransaction}. It was presented as a scatter plot instead of a line graph due to the throughput measurement not being continuous. \ac{ART} processed transactions in bursts of typically 1-2 seconds, as shown in Figure \ref{fig:chapter06:results:arttransactionminute}, which visualizes an excerpt of \ac{ART}'s processed transactions during one of the experiment runs. To take into account these processing bursts, the results in Table \ref{tab:art:transactionthroughput} include the active average throughput, which ignores the burst intervals. This allows the differentiation of how many transactions are processed on average during the bursts, as opposed to the overall average throughput.
+The visualization of the transaction throughput can be seen in Figure \ref{fig:chapter06:results:artavgtransaction}. It was presented as a scatter plot instead of a line graph due to the throughput measurement not being continuous. \ac{ART} processed transactions in one-second bursts, with typically 1-2 second pauses in-between. This pattern is visualized in Figure \ref{fig:chapter06:results:arttransactionminute}, taken from the tracing of \ac{ART}'s processed transactions during one of the experiment runs. To take into account these processing bursts, the results in Table \ref{tab:art:transactionthroughput} include the active average throughput, which ignores the burst intervals. This allows the differentiation of how many transactions are processed on average during the bursts, as opposed to the overall average throughput.
 % The transaction throughput for each specific run can be found in Figure \ref{fig:appendix02:graphs:artallrunstransaction}.
 
 \begin{table}
@@ -188,6 +188,6 @@ A further observation of high variability can be seen in the greater difference 
             \hline
         \end{tabular}
     }
-    \caption{Kafka Replication Source Connector Transaction Throughput Results}
+    \caption{Kafka Replication Transaction Throughput Results (Source Connector)}
     \label{tab:kafka:transactionthroughput}
 \end{table}

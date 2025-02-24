@@ -22,7 +22,7 @@ The experiment was also intentionally designed to measure the throughput of comp
 
 \subsection{Kafka Replication Scenarios}
 \label{ch05:methodology:design:scenarios}
-Due to the upsert nature of the \ac{JDBC} sink connector (see \ref{ch04:pipelinedevelopment:parallelizationconsiderations}), there is no real difference between insert and update operations for the replication pipeline. Since the latencies with respect to the target database operations and any delete operations are outside of the scope, the \ac{IS} operations were used to simulate a high-throughput situation. This made it easier to prepare the Adabas file beforehand, as the data had to be inserted only once, and there was no need to delete or re-insert records in Adabas for every experiment run. This helped not only with saving time between each run, but also with reproducibility, as the number of records, record content, and transactions remained the same.
+Due to the upsert nature of the \ac{JDBC} sink connector (see \ref{ch04:pipelinedevelopment:parallelizationconsiderations}), there is no real difference between insert and update operations for the replication pipeline. Since the latencies with respect to the target database operations and any delete operations are outside of the scope, the \ac{IS} operations were used to simulate a high-throughput situation. This made it easier to prepare the Adabas file beforehand, as the data had to be inserted only once, and there was no need to delete or re-insert records in Adabas for every experiment run. This helped not only with saving time between each run, but also with reproducibility, as the number of records, record content, and generated \ac{REPTOR} message structures remained the same.
 
 There were different Kafka pipeline setups tested against the \ac{ART} solution, to see whether or not parallelization would play a decisive factor in outperforming \ac{ART}, and to see which pipeline setup will ensure maximum performance. Each scenario was run and measured five times to minimize possible variability. The same was done for measuring the performance of \ac{ART}. The scenarios were as follows:
 \begin{description}
@@ -119,7 +119,6 @@ To control for the effect of hardware on performance, the \ac{VM}s used for host
          \textbf{Processor} & AMD EPYC 7763 64-Core \\
          \textbf{Memory} & 16 GiB \\
          \textbf{vCPUs} & 4 \\
-         \textbf{Max IOPS} & 6400 \\
         \hline
     \end{tabular}
     \caption{Hardware Specifications for Performance Tests}

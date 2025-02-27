@@ -119,6 +119,7 @@ Last, but not least, a replication limit of a single Adabas file was set for thi
 
 \section{Metrics}
 \label{ch04:pipelinedevelopment:metrics}
+Two approaches were used for monitoring the solution performance and health: \ac{JMX} metrics and distributed tracing with Zipkin.
 
 \subsection{Monitoring with JMX}
 Seeing as Kafka is a Java-based application that runs on the \ac{JVM}, it provides a number of \ac{JMX} metrics with the use of \ac{MBeans}, both for monitoring the system and for basic performance indicators such as broker throughput and latency. Custom metrics can also be added with the \ac{MBeans}, allowing Java applications such as custom connectors to expose metric data relevant to that specific connector. These metrics can then be exposed with the \ac{JMX} exporter agent, allowing them to be collected and evaluated \cite{kafkamonitoringgrafana}. A common stack for monitoring a Kafka-based system involves metric scraping with Prometheus and subsequent visualization (and, if necessary, alerting) with Grafana \cite{applicationmonitoringkafka}.

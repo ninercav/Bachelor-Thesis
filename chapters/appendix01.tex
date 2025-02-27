@@ -127,8 +127,8 @@
 
 % \section{Azure Examples}
 \section{Terraform Example: Provisioning Connect Worker}
-The Connect worker is started from a custom image stored in an on-premise repository and contains the custom connector code. Listing \ref{lst:terraform} demonstrates the provisioning of a single Kafka Connect worker. The number of \ac{VM}s provisioned can be changed with the \textit{count} attribute. Additional files are included in the instance, such as certificates for accessing the on-prem repository, as well as the \ac{FDT} metadata for the \ac{REPTOR} Parser.
-% Additional files added such as certs not included. Mention vmscript. or add entire script?
+The Connect worker is started from a custom image which is stored in an on-premise repository and which contains the custom connector code. Listing \ref{lst:terraform} demonstrates the provisioning of a single Kafka Connect worker. The number of \ac{VM}s provisioned can be changed with the \textit{count} attribute. Additional files are copied to the \ac{VM} instance, such as certificates for accessing the on-premise repository, or the \ac{FDT} metadata for the \ac{REPTOR} Parser.
+
 \begin{lstlisting}[frame=tb,caption={Terraform script for starting Source Connector Worker},label=lst:terraform]
 resource "azurerm_linux_virtual_machine" "kafka-source-connector-vms" {
   count               = 1

@@ -1,6 +1,5 @@
 \chapter{Supplementary Visualizations}
 
-% \section{Enlarged Diagrams}
 \begin{figure}[htbp]
     \centering
     \rotatebox{-90}{
@@ -55,7 +54,7 @@
     \caption{Metric collection excerpt of Target Adapter's processed transactions (enlarged)}
     \label{fig:appendix02:results:arttransactionminute}
 \end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%--------MESSAGE THROUGHPUT SOURCE--------%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[htbp]
     % \centering
     \subfloat[Scenario 1]{\label{fig:appendix02:results:sourcemessages:scenario1}
@@ -87,7 +86,39 @@
     \caption{Average message throughput of various Kafka replication scenarios (source connector)}
     \label{fig:appendix02:results:sourcemessages}
 \end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%--------TRANSACTION THROUGHPUT SOURCE--------%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[htbp]
+    % \centering
+    \subfloat[Scenario 1]{\label{fig:appendix02:results:sourcetransactions:scenario1}
+        % \centering
+        \includegraphics[width=0.5\textwidth]{chapters/images/source-performance/source-avg-transactions-scenario1.png}
+    }
+    % \hfill
+    \subfloat[Scenario 2]{\label{fig:appendix02:results:sourcetransactions:scenario2}
+        % \centering
+        \includegraphics[width=0.5\textwidth]{chapters/images/source-performance/source-avg-transactions-scenario2.png}
+    }
+    \hfill
+    \subfloat[Scenario 3]{\label{fig:appendix02:results:sourcetransactions:scenario3}
+        % \centering
+        \includegraphics[width=0.5\textwidth]{chapters/images/source-performance/source-avg-transactions-scenario3.png}
+    }
+    % \hfill
+    \subfloat[Scenario 4]{\label{fig:appendix02:results:sourcetransactions:scenario4}
+        % \centering
+        \includegraphics[width=0.5\textwidth]{chapters/images/source-performance/source-avg-transactions-scenario4.png}
+    }
+    \hfill
+    \centering
+    \subfloat[Scenario 5]{\label{fig:appendix02:results:sourcetransactions:scenario5}
+        % \centering
+        \includegraphics[width=0.5\textwidth]{chapters/images/source-performance/source-avg-transactions-scenario5.png}
+    }
+    \hfill
+    \caption{Average transaction throughput of various Kafka replication scenarios (source connector)}
+    \label{fig:appendix02:results:sourcemessages}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%--------MESSAGE THROUGHPUT SINK--------%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[htbp]
     % \centering
     \subfloat[Scenario 1]{\label{fig:appendix02:results:sinkmessages:scenario1}
@@ -119,7 +150,7 @@
     \caption{Average message throughput of various Kafka replication scenarios (sink connector)}
     \label{fig:appendix02:results:sinkmessages}
 \end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%--------MESSAGE THROUGHPUT BROKER--------%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[htbp]
     % \centering
     \subfloat[Scenario 1]{\label{fig:appendix02:results:brokermessages:scenario1}
@@ -151,18 +182,3 @@
     \caption{Average message throughput of various Kafka replication scenarios (broker)}
     \label{fig:appendix02:results:brokermessages}
 \end{figure}
-
-% \section{Additional Graphs}
-
-% \begin{figure}[htbp]
-%     \centering
-%     \includegraphics[width=1\textwidth]{chapters/images/art-performance/art-all-runs-message.png}
-%     \caption{Target Adapter message throughput (per run)}
-%     \label{fig:appendix02:graphs:artallrunsmessage}
-% \end{figure}
-% \begin{figure}[htbp]
-%     \centering
-%     \includegraphics[width=1\textwidth]{chapters/images/art-performance/art-all-runs-transaction.png}
-%     \caption{Target Adapter transaction throughput scatter plot (per run)}
-%     \label{fig:appendix02:graphs:artallrunstransaction}
-% \end{figure}

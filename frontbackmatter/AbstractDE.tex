@@ -4,19 +4,9 @@
 \begin{otherlanguage}{ngerman}
 	\pdfbookmark[0]{Zusammenfassung}{Zusammenfassung}
 	\chapter*{Zusammenfassung}
-	% Kurze Zusammenfassung des Inhaltes in deutscher Sprache von ca. einer Seite länge. Dabei sollte vor allem auf die folgenden Punkte eingegangen werden:
-	% %
-	% \begin{itemize}
-	%   \item Motivation: Wieso ist diese Arbeit entstanden? Warum ist das Thema der Arbeit (für die Allgemeinheit) interessant? Dabei sollte die Motivation von der konkreten Aufgabenstellung, z.B. durch eine Firma, weitestgehend abstrahiert werden. 
- %          \item Inhalt: Was ist Inhalt der Arbeit? Was genau wird in der Arbeit behandelt? Hier sollte kurz auf Methodik und Arbeitsweise eingegangen werden.
- %          \item Ergebnisse: Was sind die Ergebnisse der Arbeit? Ein kurzer Überblick über die wichtigsten Ergebnisse als Teaser, um die Arbeit vollständig zu lesen.
-	% \end{itemize}
-	% \medskip
-
-	% \noindent
-	% Eine großartige Anleitung von Kent Beck, wie man gute Abstracts schreibt, finden Sie hier:
-	% \begin{center}
- %                \url{https://plg.uwaterloo.ca/~migod/research/beckOOPSLA.html}
- %        \end{center}
+    Der Event Replicator Target Adapter für Adabas für z/OS ermöglicht die Replikation in moderne Systeme wie relationale Datenbanken, um das legacy prä-relationale Adabas zu modernisieren. Allerdings stößt der Target Adapter auf Leistungsprobleme, da er zum Beispiel keine parallele Verarbeitung von Replikationsereignissen unterstützt. Das Kafka Connect Framework wurde verwendet, um einen Prototyp zu entwickeln, der insbesondere diese Schwäche des Target Adapters adressiert.
+    Diese Arbeit untersucht die wissenschaftliche Fragestellung: „Wie ist die Performanz einer Kafka Connect-basierten Replikationspipeline für Adabas auf dem Mainframe im Vergleich zum Adabas Event Replicator Target Adapter?“. Die beiden Replikationsansätze wurden verglichen indem ihre Leistungsergebnisse evaluiert wurden. Die Leistung wurde mithilfe von JMX-Metriken und verteiltem Tracing mit Zipkin gemessen. Die Experimente umfassten mehrere unterschiedliche Konfigurationsszenarien des Kafka Clusters im Vergleich zum Single-Process Target Adapter. Diese Szenarien wurden konzipiert, um den Einfluss der Parallelisierung und Verteilung auf die Leistung des Kafka-basierten Prototyps zu untersuchen.
+    Die Hypothese war, dass die Leistung der Kafka-basierte Pipeline den in dem Fall Target Adapter übertreffen würde, wenn ihre verteilte Parallelverarbeitung optimal genutzt wird. Falls sie jedoch auch als nicht-parallele Anwendung ausgeführt würde, wurde erwartet, dass die Leistung gleich oder sogar schlechter wäre, da von den zusätzlichen Komponenten höhere Komplexität und Latenz erwartet wurde. Die Experimentergebnisse zeigten den positiven Effekt der Parallelisierung auf den Kafka-basierten Prototyp, wobei die Distribution ebenfalls die Performanzsteigerung beeinflusst hat. Der Kafka-basierte Prototyp übertraf den Target Adapter sowohl im Single-Threaded Szenario als auch in dem hochparallelisierten Szenario.
+    Diese Arbeit ist von Bedeutung, da sie eine Forschungslücke zur Modernisierung prärelationaler Datenbanken wie Adabas mit modernen Ansätzen adressiert. Kafka wurde eingesetzt, um eine parallele Verarbeitung sowie eine konfigurierbare Integration mit verschiedenen Systemen zu ermöglichen. Diese Integration ermöglicht die Skalierbarkeit, Widerstandsfähigkeit und Leistung von Datenreplikation und verbessert die Anbindung an moderne, heterogene Systeme.
 
 \end{otherlanguage}

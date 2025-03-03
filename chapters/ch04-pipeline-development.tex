@@ -1,20 +1,20 @@
 \chapter{Development of the Kafka Connector Pipeline}
 \label{ch04:pipelinedevelopment}
-
+This chapter covers the development of the Kafka-based replication solution, from its design to implementation.
 \section{Design and Scope}
-The design of the Kafka-based solution is based on a number of goals: ensuring scalability, enabling parallel processing capabilities, and building on the versatility of available Kafka \ac{APIs}. This versatility includes the ability to efficiently integrate additional components into an existing Kafka pipeline for further processing capabilities or data integration. Furthermore, the solution has to be measurable in terms of performance, both for general monitoring of the system and for comparison to the existing Software GmbH product. Figure \ref{fig:chapter04:overallarchitecture} demonstrates the architecture of the entire replication piper (excluding any additional services for collecting and displaying metrics).
+The design of the Kafka-based solution is based on a number of goals: ensuring scalability, enabling parallel processing capabilities, and building on the versatility of available Kafka \ac{APIs}. This versatility includes the ability to efficiently integrate additional components into an existing Kafka pipeline for further processing capabilities or data integration. Furthermore, the solution has to be measurable in terms of performance, both for general monitoring of the system and for comparison to the existing Software GmbH product. Figure \ref{fig:chapter04:overallarchitecture} demonstrates the architecture of the entire replication solution (excluding any additional services for collecting and displaying metrics).
 
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=1\textwidth]{chapters/images/kafka pipeline overall architecture enlarged.drawio.png}
- \caption[Overall architecture of Kafka replication pipeline]{Overall architecture of Kafka replication pipeline (see \ref{fig:appendix02:overallarchitecture} for enlarged version)}
+ \caption[Overall architecture of Kafka replication solution]{Overall architecture of Kafka replication solution (see \ref{fig:appendix02:overallarchitecture} for enlarged version)}
  \label{fig:chapter04:overallarchitecture}
 \end{figure}
 
-As the solution is intended to be a proof of concept, it is limited in scope. First of all, the solution is currently not intended for full-scale deployment in production. This means that no security measures such as encryption or authorization are supported, and all communication is performed over the \ac{HTTP}. The connectors also lack some functionality due to time constraints, such as no support for replication of coupled files and no support for changes in the \ac{FDT}. Further limitations are discussed in \ref{ch04:pipelinedevelopment:solutionlimitations}.
+As the solution is intended to be a proof of concept, it is limited in scope. First of all, the solution is currently not intended for full-scale deployment in production. This means that no security measures such as encryption or authorization are supported, and all communication is performed over the \ac{HTTP}. The connectors also lack some functionality due to time constraints, such as no support for replication of coupled files and no support for changes in the \ac{FDT}. Further limitations are discussed in \ref{ch04:pipelinedevelopment:solutionlimitations}, after the architecture fundamentals are covered.
 
 \section{Implementation Process}
-Before the implementation process could properly begin, the design and functionality of Kafka Connect were researched. This involved reading the documentation and looking at available source code of real-life connector implementations. This helped in planning the entire architecture of the solution and the design of the source connector.
+Before the implementation process could properly begin, the design and functionality of Kafka Connect were researched. This involved reading the documentation and looking at available source code of real-life connector implementations. The research done in advance helped in planning the entire architecture of the solution and the design of the source connector. The source connector was developed with Java, as the Kafka Connect's source code is also Java-based.
 
 \subsection{Implementing the Source Connector}
 The main job of the source connector involves consuming any Adabas file change events from the EntireX Broker message queue (see \ref{ch02:fundamentals:adabas:entirex}), transforming the events, and writing them to a specified Kafka topic. There were three main aspects to consider for the connector implementation: how to track changes in the Adabas files, how to divide the work for each task, and how to transform the data for replication to a relational database.
@@ -49,11 +49,6 @@ After the task consumes a \ac{UOW} from the EntireX Broker and parses it with th
 \label{ch04:pipelinedevelopment:implementation:transformingtorelational}
 To transform an Adabas record to a relational schema, a similar strategy to that of the \ac{ART} default was chosen (see \ref{ch02:fundamentals:adabas:art:schematransformation}). A group field is flattened in the root table, while a new table is generated for each PE group and MU field. The root table has the \ac{ISN} as its sole primary key. Unlike in the \ac{ART} transformation, no composed index is created of the \ac{ISN} and PE index. Instead, the PE and MU index are set as primary keys additionally to the \ac{ISN} in the respective tables. This was done to enhance table indexing and query performance. Listing \ref{lst:bonusmupequery:connect} shows an example MU field in a PE group generated by the connector, as opposed to the \ac{ART} version shown in Listing \ref{lst:bonusmupequery}. In this case, the primary key fields are the \ac{ISN}, BONUS.IX2, and INCOME.INDEX.
 
-If the schema is auto-generated by the sink connector, no foreign key constraints are created. If foreign key constraints are required, they can either be added manually or the schema can be generated beforehand.
-
-% add justification why in source connector? to avoid transformation with Kafka streams?
-
-\newpage
 \begin{lstlisting}[frame=tb,caption={Query result of the MU field BONUS in the PE field INCOME in the relational table employees\_INCOME\_BONUS (Kafka Connect version)},label=lst:bonusmupequery:connect]
  BONUS | BONUS.IX2 | INCOME.INDEX |  ISN
 -------+-----------+--------------+-------
@@ -63,6 +58,13 @@ If the schema is auto-generated by the sink connector, no foreign key constraint
   2500 |         1 |            2 |     1
   2000 |         2 |            2 |     1
 \end{lstlisting}
+
+If the schema is auto-generated by the sink connector, no foreign key constraints are created. If foreign key constraints are required, they can either be added manually or the schema can be generated beforehand.
+
+% add justification why in source connector? to avoid transformation with Kafka streams?
+
+% \newpage
+
 % talk about attempt at using Kafka Streams - leave out for now
 % TODO: explain why all messages in one topic
 
@@ -71,7 +73,6 @@ If the schema is auto-generated by the sink connector, no foreign key constraint
 To write each record to the specified Kafka topic with a message schema, it first has to be constructed as a Kafka Connect-internal \textit{structured record}. In it, the message structure and content have to be defined, along with a Connect-specific schema definition for that record. The schema is an optional component of Kafka that defines the structure of Kafka messages in a topic. If implemented, the schema can either be sent with every Kafka message, or stored and managed by an additional schema registry. If the latter strategy is used, each schema version receives its own ID which is stored in each Kafka message, allowing consumers to access the message's specific schema \cite{kafkadatabaseinverted}. This is useful later on for the \ac{JDBC} sink connector, as a way to determine the data types that each field should receive in the target database. The use of schemas is also beneficial in the case that further serialization options, such as Avro, are planned to be added in the future \cite{kreps2011kafka}.
 
 The generated structured records related to the same EntireX Broker message are then written to the specified Kafka topic as a batch. Each message key is set to the \ac{ISN} of the related Adabas record. Since the default partitioning involves hashing the message key to determine the target partition (see \ref{ch02:fundamentals:apachekafkaandkafkaconnect:apachekafka}), the messages related to the same Adabas record will always end up in the same partition; thus allowing order between the messages for that key to be maintained.
-% TODO: add example of message header as verbatim text?
 
 Each Kafka message also contains certain headers which are used to store additional information. One such message header is used for the purpose of determining the relational table name of each message\footnote{For instance in the case that the message represents an MU field value.} and the fields that are intended to be primary keys in the target database. There are also message headers generated by the Zipkin service for tracing each message (see \ref{ch04:pipelinedevelopment:metrics} for more details). Another use for the message header is to track the transaction ID (represented by the transaction commit time) for custom tracing. Figure \ref{fig:chapter04:implementation:headerexample} shows a message header containing trace-relevant Zipkin data, primary key fields, the table name, and transaction ID. The key can also be seen, showing that this message represents the record with \ac{ISN} 109425.
 
@@ -94,7 +95,7 @@ The first limitation encountered by the sink connector was its reliance on topic
 Another limitation was the sink connector's inability to set custom primary keys based on the target database table, as is done in \ac{ART}, where MU and PE counters are also treated as primary keys to keep every row identifiable. The available strategies of the sink connector were not meant to handle dynamic primary key definition while allowing the auto-creation of tables and \textit{upserting} of records \cite{jdbcsinkdocumentation}. For more information on the upserting strategy, see \ref{ch04:pipelinedevelopment:parallelizationconsiderations}.
 
 \subsubsection{Modification of Confluent JDBC Sink Connector}
-In order to address the sink connector limitations, the source code\footnote{\url{https://github.com/confluentinc/kafka-connect-jdbc}} was pulled and modified. Both the table name and primary key problems were solved by adding the necessary information to the Kafka message header, providing the sink connector tasks with the necessary information. The modified source code was then built and Dockerized.
+In order to address the sink connector limitations, the source code\footnote{\url{https://github.com/confluentinc/kafka-connect-jdbc}} was pulled and modified. Both the table name and primary key problems were solved by adding the necessary information to the Kafka message header, providing the sink connector tasks with the necessary information. The sample header in Figure \ref{fig:chapter04:implementation:headerexample}, for instance, contains the table name and primary key fields for the multiple field BONUS in the periodic group INCOME. The modified source code was then built and Dockerized.
 
 \section{Parallelization Considerations}
 \label{ch04:pipelinedevelopment:parallelizationconsiderations}
@@ -104,12 +105,12 @@ Due to the connectors' distributed nature, aspects such as data consistency and 
 % Some design choices were made in order to optimize the Kafka-based solution.
 % not enough for extra section - write about kafka streams in subsection about transforming events to relational structure!
 
-\section{Limitations}
+\section{Resulting Scope Boundaries}
 \label{ch04:pipelinedevelopment:solutionlimitations}
 % write about transactionality here??
 As already demonstrated by the need for custom modifications to the \ac{JDBC} sink connector, there were multiple challenges encountered during the development process. Some of the issues could be resolved with time and effort, while others were too complex to solve in the available time, causing limitations in the scope of this experiment.
 
-The first limitation set is the lack of transactional capabilities of the Kafka solution. While Apache Kafka supports transactionality in the form of "exactly once" delivery guarantees \cite{kafkadocumentation}, not all Kafka Connect components support it. There has been an improvement proposal\footnote{See the Kafka Improvement Proposal 618: \url{https://cwiki.apache.org/confluence/display/KAFKA/KIP-618\%3A+Exactly-Once+Support+for+Source+Connectors}} that adds the "exactly once" delivery guarantee support for source connectors running in distributed mode. However, the \ac{JDBC} sink connector currently only supports the "at least once" delivery guarantee \cite{jdbcsinkdocumentation}. With more time, the \ac{JDBC} sink connector functionality could be extended to provide support for such a delivery guarantee. However, with current available resources, total transaction support had to be left out of the scope. The solution is run with "exactly once" semantics enabled only between the source connector and Kafka brokers.
+The first limitation set was the lack of transactional capabilities of the Kafka solution. While Apache Kafka supports transactionality in the form of "exactly once" delivery guarantees \cite{kafkadocumentation}, not all Kafka Connect components support it. There has been an improvement proposal\footnote{See the Kafka Improvement Proposal 618: \url{https://cwiki.apache.org/confluence/display/KAFKA/KIP-618\%3A+Exactly-Once+Support+for+Source+Connectors}} that adds the "exactly once" delivery guarantee support for source connectors running in distributed mode. However, the \ac{JDBC} sink connector currently only supports the "at least once" delivery guarantee \cite{jdbcsinkdocumentation}. With more time, the \ac{JDBC} sink connector functionality could be extended to provide support for such a delivery guarantee. However, with current available resources, total transaction support had to be left out of the scope. The solution is run with "exactly once" semantics enabled only between the source connector and Kafka brokers.
 
 Another limitation set was the lack of a delete option in the target relational database, as that would have required further development of the custom primary key strategy. The scope was limited only to the create and update operation.
 
@@ -135,7 +136,7 @@ Figure \ref{fig:chapter04:metrics:prometheusstack} shows an example scenario wit
 
 % TODO: add screenshot of Grafana dashboard
 
-\subsection{Distributed Tracing}
+\subsection{Distributed Tracing with Zipkin}
 While \ac{JMX} metrics are useful for monitoring the system as a whole, they are typically not intended for tracing on a per-message basis. Instead, distributed tracing can be implemented with tools such as Zipkin for the tracing of multiple distributed components. In the case of our replication pipeline, a message can be traced with Zipkin from the source connector to the sink connector using the headers in the Kafka message to identify each message. In distributed tracing, a \textit{trace} represents the entire path of the message from the source to the target, while a \textit{span} represents the existence of the message in a specific component of the distributed system \cite{janes2022zipkin}. A trace therefore typically involves multiple spans in a distributed system.
 
 To enable distributed tracing of the Kafka replication solution, an instrumentation library called Brave is used to intercept traces and send them to Zipkin \cite{mallanna2020distributedzipkin}. Such \textit{interceptors} already exist for Kafka Connect in the form of producer and consumer interceptors\footnote{\url{https://github.com/openzipkin-contrib/brave-kafka-interceptor}}. 

@@ -62,7 +62,7 @@ The \ac{REPTOR} was developed by Software GmbH as a replication solution to capt
 
 \begin{figure}[htbp]
  \centering
- \includegraphics[width=0.8\textwidth]{chapters/images/reptor_architecture.png}
+ \includegraphics[width=0.9\textwidth]{chapters/images/reptor_architecture.png}
  \caption[Adabas and Event Replicator Components]{Adabas and Event Replicator Components \cite{reptorconcepts}}
  \label{fig:fundamentals:reptorarchitecture}
 \end{figure}
@@ -93,7 +93,7 @@ Each MU field is mapped to a separate relational table, where each value is repr
 Each PE group is also mapped to a separate relational table. Each sub-field in the periodic group is represented by a column in the table. An additional index field is created, composed from the \ac{ISN} and PE field index, which serves as the primary key. The foreign key constraint that references the root table is on the \ac{ISN} field. An example PE field can be seen in listing \ref{lst:bonusmuquery}.
 
 In the case of an MU field in a PE group, a separate table is created with the same logic as a typical MU table, except that an IX2 field is used instead of the IX field to show its nested nature. The aforementioned composed index field is also added to the new MU table with a foreign key constraint referencing the parent PE table. An example MU field in a PE group can be seen in Listing \ref{lst:bonusmupequery}.
-% TODO: pk and fk fields of the index, reference listing
+
 \end{description}
 
 In the root table, primary keys are set based on the schema of the Adabas file. If any fields are marked as UQ (unique) in the schema, they are used as the primary keys. If none are specified, the \ac{ISN} is used as the primary key.
@@ -126,7 +126,8 @@ In the root table, primary keys are set based on the schema of the Adabas file. 
 
 \subsubsection{Drawbacks of the Target Adapter}
 \label{ch02:fundamentals:adabas:art:limitations}
-There have been some performance concerns noted both by clients and developers when using \ac{ART} to replicate to a relational database. Possible causes could be the fact that \ac{ART} for Adabas on mainframe only supports messages in XML format, which can negatively impact performance \cite{nicola2003xml}. Another cause is speculated to be the lack of parallelism when replicating to relational databases. The only parallel processing that is supported by \ac{ART} is when loading the \ac{IS} using multiple ADARIS-generated files. This can be achieved by running multiple instances of \ac{ART}, where each instance processes one of the generated ADARIS files.
+There have been some performance concerns noted both by clients and developers when using \ac{ART} to replicate to a relational database. Possible causes could be the fact that \ac{ART} for Adabas on mainframe only supports messages in XML format, which can negatively impact performance \cite{nicola2003xml}. Another cause is speculated to be the lack of parallelism when replicating to relational databases. The only parallel processing that is supported by \ac{ART} is when loading the \ac{IS} using multiple ADARIS-generated files. This can be achieved by running multiple instances of \ac{ART}, where each instance processes one of the generated ADARIS files. However, this only works for initially populating the target, and any real-time changes are not supported.
+% TODO: however, only usable for replicating the initial data from adabas. afterwards real-time changes can no longer be parallelized
 
 \section{The Kafka Ecosystem}
 \label{ch02:fundamentals:apachekafkaandkafkaconnect}
@@ -147,7 +148,7 @@ It is important to note that Kafka is not intended to be used as a permanent sto
 
 \subsection{Kafka Connect}
 \label{ch02:fundamentals:apachekafkaandkafkaconnect:kafkaconnect}
-Kafka Connect is an open-source framework developed for Apache Kafka to allow for reliable and scalable data integration between Kafka and external systems such as databases. The Apache Foundation offers publicly available \ac{APIs} for implementing source connectors (to produce data to Kafka) and sink connectors (to consume from Kafka and write to external systems) \cite{kafkadocumentation}. Some companies such as Confluent provide already existing connectors, such as the \ac{JDBC} source and sink connectors\footnote{\url{https://github.com/confluentinc/kafka-connect-jdbc}}.
+Kafka Connect is an open-source framework developed for Apache Kafka to allow for reliable and scalable data integration between Kafka and external systems such as databases. The Apache Foundation offers publicly available \ac{APIs} for implementing source connectors (to produce data to Kafka) and sink connectors (to consume from Kafka and write to external systems) \cite{kafkadocumentation}. Some companies such as Confluent provide already existing connectors, such as the \ac{JDBC} source and sink connectors\footnote{\url{https://github.com/confluentinc/kafka-connect-jdbc}} for writing data to a relational database.
 
 While it is possible to not use Kafka Connect and instead write producers as part of the source system to capture any changes, tests performed by \cite{srijithkafkaconnectperformance} have shown that the traditional publish-subscribe model can perform worse than a Kafka Connect pipeline. Furthermore, \cite{maison2023kafkaconnect} identified the number of threads reserved for producer operations in the source system as a possible performance bottleneck. This is improved with Kafka connectors, which can be scaled independently of the source system, showing positive performance results in both papers.
 
@@ -155,7 +156,7 @@ Kafka Connect has two modes: standalone and distributed. In standalone mode, the
 
 \begin{figure}[htbp]
  \centering
- \includegraphics[width=0.6\textwidth]{chapters/images/kafkaconnectexample.png}
+ \includegraphics[width=0.7\textwidth]{chapters/images/kafkaconnectexample.png}
  \caption[Visualization of Kafka Connect with Sink and Source Connector]{Visualization of Kafka Connect with Sink and Source Connector \cite{maison2023kafkaconnect}}
  \label{fig:fundamentals:kafkaconnectexample}
 \end{figure}
@@ -166,7 +167,7 @@ Figure \ref{fig:fundamentals:kafkaconnectarchitecture} shows the possible archit
 
 \begin{figure}[htbp]
  \centering
- \includegraphics[width=0.8\textwidth]{chapters/images/kafka connect architecture enlarged.drawio.png}
+ \includegraphics[width=1\textwidth]{chapters/images/kafka connect architecture enlarged.drawio.png}
  \caption[Example Architecture of a Kafka Source Connector in Distributed Mode]{Example Architecture of a Kafka Source Connector in Distributed Mode (see \ref{fig:appendix02:kafkaconnectarchitecture} for enlarged version)}
  \label{fig:fundamentals:kafkaconnectarchitecture}
 \end{figure}
